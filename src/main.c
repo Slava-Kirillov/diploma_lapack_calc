@@ -2,6 +2,8 @@
 
 extern int matrix_columns, matrix_rows, constan_term_rows;
 
+#define SIZE 4
+
 int main() {
 
     FILE *file_real_matrix = get_file("real_part_matrix");
@@ -13,7 +15,36 @@ int main() {
     complex **matrix = get_matrix(file_real_matrix, file_image_matrix);
     complex **constan_terms = get_constant_term(file_real_constant_term, file_image_constant_term);
 
-//    int cgetrf_(integer *m, integer *n, complex *a, integer *lda, integer *ipiv, integer *info);
-//    cgetrf_(&N, &N, matrix[0], &N, &N, &N);
+
+//TODO: тестовый код для расчета СЛАУ
+//######################################################################################################################
+    integer M = SIZE;
+    integer N = SIZE;
+
+    integer LDA = M;
+    integer INFO;
+
+    double a[SIZE * SIZE] = {16.0, 5.0, 9.0, 4.0, 2.0, 11.0, 7.0, 14.0, 3.0, 10.0, 6.0, 15.0, 13.0, 8.0, 12.0, 1.0};
+
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            printf("%f ", a[i + j]);
+        }
+        printf("\n");
+    }
+
+    double ipiv[SIZE];
+    dgetrf_(&M, &N, a, &LDA, ipiv, &INFO);
+
+    printf("\n INFO=%d\n", INFO);
+
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            printf("%f ", a[i + j]);
+        }
+        printf("\n");
+    }
+//######################################################################################################################
+
     return 0;
 }
