@@ -3,7 +3,7 @@ project(diploma_lapack_calc C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(diploma_lapack_calc main.c)
+add_executable(diploma_lapack_calc src/main.c src/lapack_calc.c src/include/lapack_calc.h)
 
 include_directories(/home/kirillov/Library/CLAPACK/INCLUDE)
 
