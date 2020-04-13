@@ -2,6 +2,8 @@
 
 const char *path_to_data_directory = "/home/kirillov/IdeaProjects/diplomaMSUJava/src/main/resources/data/";
 
+void write_result_to_file(char *filename, float *vector_of_points, int number_of_columns, int number_of_rows);
+
 /**
  * Открыть файл для чтения
  * @param filename
@@ -25,12 +27,59 @@ FILE *get_file(char *filename) {
     return file;
 }
 
+void save_result(complex *constant_terms, int length) {
+    float real[length];
+    float imag[length];
+
+    for (int i = 0; i < length; i++) {
+        real[i] = constant_terms[i].r;
+        imag[i] = constant_terms[i].i;
+    }
+
+    write_result_to_file("real_result", real, 1, length);
+    write_result_to_file("imag_result", imag, 1, length);
+}
+
+/**
+ * Печать результата в файл
+ * @param filename
+ * @param vector_of_points
+ * @param number_of_columns
+ * @param number_of_rows
+ */
+void write_result_to_file(char *filename, float *vector_of_points, int number_of_columns, int number_of_rows) {
+    char *path_to_data_file = malloc(sizeof(char) * (strlen(filename) + strlen(path_to_data_directory)));
+    memset(path_to_data_file, 0, sizeof(char) * (strlen(filename) + strlen(path_to_data_directory)));
+
+    strcat(path_to_data_file, path_to_data_directory);
+    strcat(path_to_data_file, filename);
+
+    FILE *file = fopen(path_to_data_file, "w");
+
+    if (file == NULL) {
+        perror(path_to_data_file);
+        exit(EXIT_FAILURE);
+    }
+
+    fprintf(file, "%d\n", number_of_rows);
+
+    for (int i = 0; i < number_of_rows; ++i) {
+        for (int j = 0; j < number_of_columns; ++j) {
+            fprintf(file, "%f ", *vector_of_points);
+            vector_of_points++;
+        }
+        fprintf(file, "%s", "\n");
+    }
+
+    fclose(file);
+}
+
 /**
  * Получить матрицу с комплексными коэффициентами СЛАУ
  * @param file
  * @return
  */
-complex **get_matrix(FILE *file_real_matrix, FILE *file_image_matrix) {
+complex *get_matrix(FILE *file_real_matrix, FILE *file_image_matrix) {
     char line[128], *p;
     int int_line[2];
 
@@ -49,8 +98,6 @@ complex **get_matrix(FILE *file_real_matrix, FILE *file_image_matrix) {
     matrix_rows = n_rows;
 
     char line_[50000], *p_;
-
-    complex **matrix = malloc(m_columns * n_rows * sizeof(complex));
 
     float *real = malloc(sizeof(float) * m_columns * n_rows);
     int k = 0;
@@ -89,11 +136,10 @@ complex **get_matrix(FILE *file_real_matrix, FILE *file_image_matrix) {
 
     fclose(file_image_matrix);
 
-    for (int i = 0; i < m_columns * n_rows; i++) {
-        complex *num = malloc(sizeof(complex));
-        num->r = real[i];
-        num->i = image[i];
+    complex *matrix = malloc(m_columns * n_rows * sizeof(complex));
 
+    for (int i = 0; i < m_columns * n_rows; i++) {
+        complex num = {real[i], image[i]};
         matrix[i] = num;
     }
     return matrix;
@@ -104,7 +150,7 @@ complex **get_matrix(FILE *file_real_matrix, FILE *file_image_matrix) {
  * @param file
  * @return
  */
-complex **get_constant_term(FILE *file_real_constant_term, FILE *file_image_constant_term) {
+complex *get_constant_term(FILE *file_real_constant_term, FILE *file_image_constant_term) {
     char line[128], *p;
     int int_line;
 
@@ -117,8 +163,6 @@ complex **get_constant_term(FILE *file_real_constant_term, FILE *file_image_cons
     constan_term_rows = int_line;
 
     char line_[128], *p_;
-
-    complex **vec = malloc(int_line * sizeof(complex));
 
     float *real = malloc(sizeof(float) * int_line);
     int k = 0;
@@ -154,11 +198,10 @@ complex **get_constant_term(FILE *file_real_constant_term, FILE *file_image_cons
 
     fclose(file_image_constant_term);
 
-    for (int i = 0; i < int_line; i++) {
-        complex *num = malloc(sizeof(complex));
-        num->r = real[i];
-        num->i = image[i];
+    complex *vec = malloc(int_line * sizeof(complex));
 
+    for (int i = 0; i < int_line; i++) {
+        complex num = {real[i], image[i]};
         vec[i] = num;
     }
     return vec;
