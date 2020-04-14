@@ -1,8 +1,16 @@
 #include "include/lapack_calc.h"
 
+typedef struct Data {
+    float *data;
+    int columns;
+    int rows;
+} data_struct;
+
 const char *path_to_data_directory = "/home/kirillov/IdeaProjects/diplomaMSUJava/src/main/resources/data/";
 
 void write_result_to_file(char *filename, float *vector_of_points, int number_of_columns, int number_of_rows);
+
+data_struct *get_matrix_data(FILE *file);
 
 /**
  * Открыть файл для чтения
@@ -74,16 +82,11 @@ void write_result_to_file(char *filename, float *vector_of_points, int number_of
     fclose(file);
 }
 
-/**
- * Получить матрицу с комплексными коэффициентами СЛАУ
- * @param file
- * @return
- */
-complex *get_matrix(FILE *file_real_matrix, FILE *file_image_matrix) {
+data_struct *get_matrix_data(FILE *file) {
     char line[128], *p;
     int int_line[2];
 
-    if (fgets(line, 126, file_real_matrix)) {
+    if (fgets(line, 126, file)) {
         p = strtok(line, " ");
         for (int i = 0; i < 2; i++) {
             sscanf(p, "%d", &int_line[i]);
@@ -98,63 +101,54 @@ complex *get_matrix(FILE *file_real_matrix, FILE *file_image_matrix) {
     matrix_rows = n_rows;
 
     char line_[50000], *p_;
-
-    float *real = malloc(sizeof(float) * m_columns * n_rows);
+    float *data = malloc(sizeof(float) * m_columns * n_rows);
     int k = 0;
-    while (!feof(file_real_matrix)) {
-        if (fgets(line_, 50000, file_real_matrix)) {
+    while (!feof(file)) {
+        if (fgets(line_, 50000, file)) {
             p_ = strtok(line_, " ");
             for (int i = 0; i < m_columns; ++i) {
                 if (p_ == NULL || !strcmp(p_, "\n")) {
                     break;
                 }
-                sscanf(p_, "%f", &real[k++]);
+                sscanf(p_, "%f", &data[k++]);
                 p_ = strtok(NULL, " ");
             }
         }
     }
 
-    fclose(file_real_matrix);
+    fclose(file);
 
-    char line__[50000], *p__;
+    data_struct *result = malloc(sizeof(data_struct));
+    result->data = data;
+    result->columns = m_columns;
+    result->rows = n_rows;
 
-    k = 0;
-    float *image = malloc(sizeof(float) * m_columns * n_rows);
-    fgets(line__, 50000, file_image_matrix);
-    while (!feof(file_image_matrix)) {
-        if (fgets(line__, 50000, file_image_matrix)) {
-            p__ = strtok(line__, " ");
-            for (int i = 0; i < m_columns; ++i) {
-                if (p__ == NULL || !strcmp(p__, "\n")) {
-                    break;
-                }
-                sscanf(p__, "%f", &image[k++]);
-                p__ = strtok(NULL, " ");
-            }
-        }
-    }
+    return result;
+}
 
-    fclose(file_image_matrix);
+/**
+ * Получить матрицу с комплексными коэффициентами СЛАУ
+ * @param file
+ * @return
+ */
+complex *get_matrix(FILE *file_real_matrix, FILE *file_image_matrix) {
+    data_struct *real = get_matrix_data(file_real_matrix);
+    data_struct *image = get_matrix_data(file_image_matrix);
 
-    complex *matrix = malloc(m_columns * n_rows * sizeof(complex));
+    complex *matrix = malloc(real->columns * real->rows * sizeof(complex));
 
-    for (int i = 0; i < m_columns * n_rows; i++) {
-        complex num = {real[i], image[i]};
+    for (int i = 0; i < real->columns * real->rows; i++) {
+        complex num = {real->data[i], image->data[i]};
         matrix[i] = num;
     }
     return matrix;
 }
 
-/**
- * Получить массив свободных коэффициентов СЛАУ
- * @param file
- * @return
- */
-complex *get_constant_term(FILE *file_real_constant_term, FILE *file_image_constant_term) {
+data_struct *get_const_term_data(FILE *file) {
     char line[128], *p;
     int int_line;
 
-    if (fgets(line, 126, file_real_constant_term)) {
+    if (fgets(line, 126, file)) {
         p = strtok(line, " ");
         sscanf(p, "%d", &int_line);
         p = strtok(NULL, " ");
@@ -164,44 +158,42 @@ complex *get_constant_term(FILE *file_real_constant_term, FILE *file_image_const
 
     char line_[128], *p_;
 
-    float *real = malloc(sizeof(float) * int_line);
+    float *data = malloc(sizeof(float) * int_line);
     int k = 0;
-    while (!feof(file_real_constant_term)) {
-        if (fgets(line_, 126, file_real_constant_term)) {
+    while (!feof(file)) {
+        if (fgets(line_, 126, file)) {
             p_ = strtok(line_, " ");
             if (p_ == NULL || !strcmp(p_, "\n")) {
                 break;
             }
-            sscanf(p_, "%f", &real[k++]);
+            sscanf(p_, "%f", &data[k++]);
             p_ = strtok(NULL, " ");
         }
     }
 
-    fclose(file_real_constant_term);
+    fclose(file);
 
-    char line__[128], *p__;
+    data_struct *result = malloc(sizeof(data_struct));
+    result->data = data;
+    result->rows = int_line;
 
-    k = 0;
-    float *image = malloc(sizeof(float) * int_line);
+    return result;
+}
 
-    fgets(line__, 126, file_image_constant_term);
-    while (!feof(file_image_constant_term)) {
-        if (fgets(line__, 126, file_image_constant_term)) {
-            p__ = strtok(line__, " ");
-            if (p__ == NULL || !strcmp(p__, "\n")) {
-                break;
-            }
-            sscanf(p__, "%f", &image[k++]);
-            p__ = strtok(NULL, " ");
-        }
-    }
+/**
+ * Получить массив свободных коэффициентов СЛАУ
+ * @param file
+ * @return
+ */
+complex *get_constant_term(FILE *file_real_constant_term, FILE *file_image_constant_term) {
 
-    fclose(file_image_constant_term);
+    data_struct *real = get_const_term_data(file_real_constant_term);
+    data_struct *image = get_const_term_data(file_image_constant_term);
 
-    complex *vec = malloc(int_line * sizeof(complex));
+    complex *vec = malloc(real->columns * sizeof(complex));
 
-    for (int i = 0; i < int_line; i++) {
-        complex num = {real[i], image[i]};
+    for (int i = 0; i < real->rows; i++) {
+        complex num = {real->data[i], image->data[i]};
         vec[i] = num;
     }
     return vec;
