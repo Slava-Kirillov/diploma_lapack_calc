@@ -6,7 +6,7 @@ typedef struct Data {
     int rows;
 } data_struct;
 
-const char *path_to_data_directory = "/home/kirillov/IdeaProjects/diplomaMSUJava/src/main/resources/data/";
+const char *path_to_data_directory = "/home/kirillov/IdeaProjects/diplomaMSUJava/src/main/resources/data/results/";
 
 void write_result_to_file(char *filename, float *vector_of_points, int number_of_columns, int number_of_rows);
 
@@ -100,11 +100,11 @@ data_struct *get_matrix_data(FILE *file) {
     matrix_columns = m_columns;
     matrix_rows = n_rows;
 
-    char line_[50000], *p_;
+    char line_[500000], *p_;
     float *data = malloc(sizeof(float) * m_columns * n_rows);
     int k = 0;
     while (!feof(file)) {
-        if (fgets(line_, 50000, file)) {
+        if (fgets(line_, 500000, file)) {
             p_ = strtok(line_, " ");
             for (int i = 0; i < m_columns; ++i) {
                 if (p_ == NULL || !strcmp(p_, "\n")) {
@@ -190,7 +190,7 @@ complex *get_constant_term(FILE *file_real_constant_term, FILE *file_image_const
     data_struct *real = get_const_term_data(file_real_constant_term);
     data_struct *image = get_const_term_data(file_image_constant_term);
 
-    complex *vec = malloc(real->columns * sizeof(complex));
+    complex *vec = malloc(real->rows * sizeof(complex));
 
     for (int i = 0; i < real->rows; i++) {
         complex num = {real->data[i], image->data[i]};

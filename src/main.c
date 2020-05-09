@@ -1,6 +1,5 @@
 #include "include/lapack_calc.h"
-
-extern int matrix_columns, matrix_rows, constan_term_rows;
+#include <time.h>
 
 int main() {
 
@@ -15,24 +14,20 @@ int main() {
 
     integer M = matrix_rows;
     integer N = matrix_columns;
-    integer NRBS = 1;
+    integer NRHS = 1;
 
     integer LDA = matrix_columns;
     integer LDB = constan_term_rows;
-    integer INFO;
+    integer INFO = 0;
+    char TRANS = 'T';
 
     integer ipiv[constan_term_rows];
 
+    const time_t time1 = time(NULL);
     cgetrf_(&M, &N, matrix, &LDA, ipiv, &INFO);
-    cgetrs_("N", &N, &NRBS, matrix, &LDA, ipiv, constan_terms, &LDB, &INFO);
-
-    printf("\n INFO=%d\n", (int) INFO);
-
-//    if (!INFO) {
-//        for (int i = 0; i < constan_term_rows; i++) {
-//            printf("%f + %fi\n", constan_terms[i].r, constan_terms[i].i);
-//        }
-//    }
+    cgetrs_(&TRANS, &N, &NRHS, matrix, &LDA, ipiv, constan_terms, &LDB, &INFO);
+    const time_t time2 = time(NULL);
+    printf("%ld", time2 - time1);
 
     save_result(constan_terms, LDB);
 
