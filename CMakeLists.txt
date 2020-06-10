@@ -9,4 +9,4 @@ include_directories(/home/kirillov/Library/CLAPACK/INCLUDE)
 
 #link_directories(/home/kirillov/Library/CLAPACK)
 
-target_link_libraries(diploma_lapack_calc -llapack -lblas -lf2c -lm -lc)
+target_link_libraries(diploma_lapack_calc -llapack -lblas -lf2c -lm -lc -lpthread)
